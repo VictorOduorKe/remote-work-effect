@@ -69,8 +69,8 @@ st.divider()
 st.subheader("🏢 Organisational Preparedness vs Morale")
 
 fig3 = px.line(
-    df.groupby("org_prepared", as_index=False)["morale_score"].mean(),
-    x="org_prepared",
+    df.groupby("org_preparedness_last_year", as_index=False)["morale_score"].mean(),
+    x="org_preparedness_last_year",
     y="morale_score",
     markers=True,
     title="Organisational Preparedness vs Morale"

@@ -7,21 +7,39 @@ import os
 # =============================
 OUTPUT_DIR = "charts_2020"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
-
 # =============================
 # 1. LOAD & PREP DATA
 # =============================
 def get_dataframe():
-    df = pd.read_csv("2020_cleaned_data.csv")
+    df = pd.read_csv("datasets/2020_cleaned_data.csv")
     df.columns = df.columns.str.strip().str.lower()
     
+    # Map Likert scales to numeric
+    likert_map = {
+        "Strongly agree": 5,
+        "Somewhat agree": 4,
+        "Neither agree nor disagree": 3,
+        "Somewhat disagree": 2,
+        "Strongly disagree": 1,
+    }
+    for col in ["org_encouragement_last_year", "org_preparedness_last_year"]:
+        if col in df.columns:
+            df[col] = df[col].map(likert_map)
+
     # Ensure required columns exist and are numeric where possible
-    numeric_cols = ["org_encouraged", "org_prepared", "family_time", "caring_time", "commute_time", "age"]
+    numeric_cols = [
+        "org_encouragement_last_year", "org_preparedness_last_year", 
+        "office_family_hours", "office_domestic_hours", "office_commute_hours", "age"
+    ]
     for col in numeric_cols:
         if col in df.columns:
             df[col] = pd.to_numeric(df[col], errors='coerce')
             
-    df = df.dropna(subset=["time_ly", "org_encouraged", "org_prepared"])
+    df = df.dropna(subset=[
+        "remote_time_last_year", 
+        "org_encouragement_last_year", 
+        "org_preparedness_last_year"
+    ])
     
     # FEATURE ENGINEERING
     def classify_work_mode(value):
@@ -32,14 +50,14 @@ def get_dataframe():
             return "Hybrid"
         return "Mostly remote"
 
-    df["work_mode"] = df["time_ly"].apply(classify_work_mode)
+    df["work_mode"] = df["remote_time_last_year"].apply(classify_work_mode)
 
     # Use pre-cleaned Likert scores
-    df["morale_score"] = (df["org_encouraged"] + df["org_prepared"]) / 2
+    df["morale_score"] = (df["org_encouragement_last_year"] + df["org_preparedness_last_year"]) / 2
     
-    df["total_care_load"] = df["family_time"] + df["caring_time"]
+    df["total_care_load"] = df["office_family_hours"] + df["office_domestic_hours"]
     df["burnout_risk"] = df["total_care_load"] / (
-        df["total_care_load"] + df["commute_time"] + 1
+        df["total_care_load"] + df["office_commute_hours"] + 1
     )
     
     df["engagement_score"] = df["morale_score"]
@@ -65,7 +83,7 @@ plt.close()
 # =============================
 # 3. INSIGHT 2: ORG SUPPORT → JOB SATISFACTION
 # =============================
-support_vs_morale = df.groupby("org_prepared")["morale_score"].mean()
+support_vs_morale = df.groupby("org_preparedness_last_year")["morale_score"].mean()
 
 plt.figure()
 support_vs_morale.plot(marker="o")
