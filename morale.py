@@ -7,12 +7,11 @@ import os
 # =============================
 OUTPUT_DIR = "charts_2020"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
-
 # =============================
 # 1. LOAD & PREP DATA
 # =============================
 def get_dataframe():
-    df = pd.read_csv("2020_cleaned_data.csv")
+    df = pd.read_csv("datasets/2020_cleaned_data.csv")
     df.columns = df.columns.str.strip().str.lower()
     
     # Ensure required columns exist and are numeric where possible

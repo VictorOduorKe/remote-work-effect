@@ -214,8 +214,8 @@ def clean_file(input_file, output_file):
 
 if __name__ == "__main__":
     tasks = [
-        ("2020_rws.csv", "2020_cleaned_data.csv"),
-        ("2021_rws.csv", "2021_cleaned_data.csv")
+        ("datasets/2020_rws.csv", "datasets/2020_cleaned_data.csv"),
+        ("datasets/2021_rws.csv", "datasets/2021_cleaned_data.csv")
     ]
     
     for input_f, output_f in tasks:
