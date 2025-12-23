@@ -2,11 +2,33 @@ import pandas as pd
 import numpy as np
 import chardet
 import os
+import re
 
 def detect_encoding(file_path):
     with open(file_path, 'rb') as f:
         result = chardet.detect(f.read(100000))  # Sample first 100KB
     return result['encoding']
+
+def merge_barrier_columns(df, prefix):
+    """Consolidates multiple barrier columns into max 3 columns."""
+    # Find all columns that match the barrier pattern for this prefix
+    # Pattern: ^prefix(_\d+)?$ (e.g., major_barrier or major_barrier_1)
+    pattern = re.compile(rf"^{prefix}(_\d+)?$")
+    cols_to_merge = [c for c in df.columns if pattern.match(c)]
+    
+    if not cols_to_merge:
+        return df
+
+    # Collect non-null values for each row
+    values = df[cols_to_merge].apply(lambda row: [v for v in row if pd.notnull(v) and str(v).strip()], axis=1)
+    
+    # Create at most 3 new columns
+    for i in range(1, 4):
+        df[f"{prefix}{i}"] = values.apply(lambda x: x[i-1] if len(x) >= i else np.nan)
+    
+    # Drop the original redundant columns
+    df.drop(columns=cols_to_merge, inplace=True)
+    return df
 
 def clean_file(input_file, output_file):
     print(f"Processing {input_file}...")
@@ -78,8 +100,8 @@ def clean_file(input_file, output_file):
         "manage employees remotely": "mgmt_prepared_remote",
         "more focused on results": "mgmt_focus_results",
         "contact my employees": "mgmt_contact",
-        "biggest barriers": "barriers_major",
-        "smallest barriers": "barriers_minor",
+        "biggest barriers": "major_barrier",
+        "smallest barriers": "minor_barrier",
         "policy_updated_covid": "policy_updated",
         "has_your_employer_changed_or_updated_their_policy": "policy_updated",
         "hybrid_day_usage": "hybrid_usage",
@@ -97,7 +119,7 @@ def clean_file(input_file, output_file):
         "org_support_who": "org_support_who",
         "pay_cut_interest": "pay_cut_interest",
         "pay_cut_max": "pay_cut_max",
-        "barrier_improved_": "barrier_imp_"
+        "barrier_improved_": "barr_imp_"
     }
 
     # Rename columns and ensure uniqueness
@@ -115,7 +137,6 @@ def clean_file(input_file, output_file):
             # Fallback: simple cleanup of existing header
             clean_name = col_lower.replace('\n', ' ').replace('\r', '').strip()
             # Remove parentheses and their content for brevity
-            import re
             clean_name = re.sub(r'\(.*?\)', '', clean_name).strip()
             
             clean_name = ''.join(c if c.isalnum() else '_' for c in clean_name)
@@ -139,19 +160,51 @@ def clean_file(input_file, output_file):
     df.columns = new_columns_list
 
     # 3. Standardize Missing Values
-    df.replace(['NA', 'N/A', 'nan', ' '], np.nan, inplace=True)
+    df.replace(['NA', 'N/A', 'nan', ' ', 'None'], np.nan, inplace=True)
 
-    # 4. Data Sanitization (Remove non-printable ASCII)
-    # Iterate over columns by their index to avoid issues if names were somehow duplicate
+    # 4. Convert Likert scales (Strongly agree -> 5)
+    likert_map = {
+        "Strongly agree": 5,
+        "Somewhat agree": 4,
+        "Neither agree nor disagree": 3,
+        "Somewhat disagree": 2,
+        "Strongly disagree": 1
+    }
+    
+    for col in df.columns:
+        if df[col].dtype == 'object':
+            # Check if column looks like a Likert scale
+            # We check if most of the non-null values are in our map keys
+            unique_vals = [str(v).strip() for v in df[col].dropna().unique()]
+            if any(val in likert_map for val in unique_vals):
+                df[col] = df[col].strip().replace(likert_map) if hasattr(df[col], 'strip') else df[col].replace(likert_map)
+                # Ensure it's numeric if possible
+                df[col] = pd.to_numeric(df[col], errors='ignore')
+
+    # 5. Merge Barrier Columns (max 3 each)
+    df = merge_barrier_columns(df, "major_barrier")
+    df = merge_barrier_columns(df, "minor_barrier")
+
+    # 6. Create Derived Variable (age = 2025 - birth_year)
+    if 'birth_year' in df.columns:
+        df['birth_year'] = pd.to_numeric(df['birth_year'], errors='coerce')
+        df['age'] = 2025 - df['birth_year']
+
+    # 7. Standardize Text Responses (Trim and Lowercase)
+    for col in df.columns:
+        if df[col].dtype == 'object':
+            df[col] = df[col].apply(lambda x: str(x).strip().lower() if pd.notnull(x) else x)
+
+    # 8. Data Sanitization (Remove non-printable ASCII)
     for i in range(len(df.columns)):
         if df.iloc[:, i].dtype == 'object':
             df.iloc[:, i] = df.iloc[:, i].apply(lambda x: str(x).encode('ascii', 'ignore').decode('ascii') if pd.notnull(x) else x)
 
-    # 5. Drop entirely empty rows/cols
+    # 9. Drop entirely empty rows/cols
     df.dropna(axis=1, how='all', inplace=True)
     df.dropna(axis=0, how='all', inplace=True)
 
-    # 6. Save
+    # 10. Save
     df.to_csv(output_file, index=False)
     print(f"Successfully cleaned and saved to {output_file}. Shape: {df.shape}")
 
