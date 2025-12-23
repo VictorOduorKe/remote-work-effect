@@ -122,5 +122,8 @@ summary = df.groupby("work_mode").agg({
     "total_care_load": "mean"
 }).round(2)
 
-print("\n=== 2020 Job Satisfaction, Stress & Engagement Summary ===")
-print(summary)
+def get_dataframe():
+    return df.copy()
+
+def get_summary():
+    return summary.copy()

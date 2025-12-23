@@ -97,3 +97,12 @@ Two files with cleaned data(2020_cleaned_data.csv,2021_cleaned_data.csv) will be
         "pay_cut_max": "pay_cut_max",
         "barrier_improved_": "barrier_imp_"
         ```
+
+# Running streanlit app
+```bash
+streamlit run app.py
+```
+**visit this url in browser**
+```bash
+  Local URL: http://localhost:8502
+```
