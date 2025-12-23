@@ -185,10 +185,14 @@ def clean_file(input_file, output_file):
     df = merge_barrier_columns(df, "major_barrier")
     df = merge_barrier_columns(df, "minor_barrier")
 
-    # 6. Create Derived Variable (age = 2025 - birth_year)
+    # 6. Create Derived Variable (age = dataset_year - birth_year)
+    # Extract year from filename (e.g., 2020_rws.csv -> 2020)
+    year_match = re.search(r'(\d{4})', os.path.basename(input_file))
+    dataset_year = int(year_match.group(1)) if year_match else 2025
+    
     if 'birth_year' in df.columns:
         df['birth_year'] = pd.to_numeric(df['birth_year'], errors='coerce')
-        df['age'] = 2025 - df['birth_year']
+        df['age'] = dataset_year - df['birth_year']
 
     # 7. Standardize Text Responses (Trim and Lowercase)
     for col in df.columns:
