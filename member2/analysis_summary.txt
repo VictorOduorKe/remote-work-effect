@@ -1,0 +1,21 @@
+Member 2 Analysis: Productivity (2021 Dataset)
+==============================================
+
+Total Analyzeable Rows: 1421
+
+1. Average Productivity Impact by Work Mode:
+work_mode
+Remote     21.822917
+Hybrid     19.036145
+On-site    10.606061
+
+2. % Reporting HIGHER Productivity:
+work_mode
+Hybrid     69.018933
+On-site    54.166667
+Remote     68.750000
+
+3. Insight Notes:
+- Remote workers report the highest increase in productivity.
+- Even Hybrid workers report a net positive impact.
+- On-site workers (<=20% remote) show the lowest (but still positive?) average.

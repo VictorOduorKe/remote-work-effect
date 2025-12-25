@@ -1,0 +1,18 @@
+Member 2 Analysis: Comparative Productivity (2020 vs 2021)
+========================================================
+
+1. Overall Trend:
+2020 Avg Impact: 13.03%
+2021 Avg Impact: 18.60%
+Change: +5.57% (Productivity gains have increased)
+
+2. Impact by Work Mode (Year over Year):
+work_mode     Hybrid    On-site     Remote
+year                                      
+2020       10.538642   8.262411  16.040100
+2021       19.036145  10.606061  21.822917
+
+3. Key Insights:
+- **Hybrid & Remote Resilience:** Both groups consistently report higher productivity than On-site workers across both years.
+- **Hybrid Model Maturation:** The productivity benefit of Hybrid work has likely improved as people adjusted to the 'new normal' in 2021.
+- **On-site Stability:** On-site workers show lower productivity gains from remote work (expected, as they do it less), but the metric remains stable.
